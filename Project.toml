@@ -1,0 +1,13 @@
+name = "BinaryHeaps"
+uuid = "b2a6c25c-c996-4615-94ab-6e519ffb8690"
+authors = ["SciML Open Source Scientific Machine Learning"]
+version = "1.0.0"
+
+[compat]
+julia = "1.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
