@@ -40,11 +40,11 @@ using Test
 
             @testset "implicit conversion" begin
                 @test BinaryHeap{Float64, Base.ForwardOrdering}(vs) isa
-                      BinaryHeap{Float64, Base.ForwardOrdering}
+                    BinaryHeap{Float64, Base.ForwardOrdering}
                 @test BinaryMinHeap{Float64}(vs) isa BinaryMinHeap{Float64}
                 @test BinaryMaxHeap{Float64}(vs) isa BinaryMaxHeap{Float64}
                 @test BinaryHeap{Tuple{Int, Float64}}(ordering, vs2) isa
-                      BinaryHeap{Tuple{Int, Float64}}
+                    BinaryHeap{Tuple{Int, Float64}}
             end
 
             @testset "confirm heap" begin
@@ -84,9 +84,12 @@ using Test
                 @test !isempty(h)
                 @test first(h) == (2, 1)
                 @test isheap(
-                    [(2, 1), (4, 2), (3, 3), (1, 4), (10, 7), (6, 9), (7, 10),
-                        (8, 14), (9, 8), (5, 16)],
-                    ordering)
+                    [
+                        (2, 1), (4, 2), (3, 3), (1, 4), (10, 7), (6, 9), (7, 10),
+                        (8, 14), (9, 8), (5, 16),
+                    ],
+                    ordering
+                )
                 @test sizehint!(h, 100) === h
             end
 
@@ -111,7 +114,8 @@ using Test
                         [1, 2, 3, 4, 16, 9, 10],
                         [1, 2, 3, 4, 16, 9, 10, 14],
                         [1, 2, 3, 4, 16, 9, 10, 14, 8],
-                        [1, 2, 3, 4, 7, 9, 10, 14, 8, 16]]
+                        [1, 2, 3, 4, 7, 9, 10, 14, 8, 16],
+                    ]
 
                     for i in 1:length(vs)
                         push!(hmin, vs[i])
@@ -121,8 +125,10 @@ using Test
                     end
 
                     @testset "pop! hmin" begin
-                        @test isequal(extract_all!(hmin),
-                            [1, 2, 3, 4, 7, 8, 9, 10, 14, 16])
+                        @test isequal(
+                            extract_all!(hmin),
+                            [1, 2, 3, 4, 7, 8, 9, 10, 14, 16]
+                        )
                         @test isempty(hmin)
                     end
                 end
@@ -142,7 +148,8 @@ using Test
                         [16, 4, 10, 1, 2, 3, 9],
                         [16, 14, 10, 4, 2, 3, 9, 1],
                         [16, 14, 10, 8, 2, 3, 9, 1, 4],
-                        [16, 14, 10, 8, 7, 3, 9, 1, 4, 2]]
+                        [16, 14, 10, 8, 7, 3, 9, 1, 4, 2],
+                    ]
 
                     for i in 1:length(vs)
                         push!(hmax, vs[i])
@@ -152,8 +159,10 @@ using Test
                     end
 
                     @testset "pop! hmax" begin
-                        @test isequal(extract_all!(hmax),
-                            [16, 14, 10, 9, 8, 7, 4, 3, 2, 1])
+                        @test isequal(
+                            extract_all!(hmax),
+                            [16, 14, 10, 9, 8, 7, 4, 3, 2, 1]
+                        )
                         @test isempty(hmax)
                     end
                 end
@@ -171,12 +180,19 @@ using Test
                         [(2, 1), (4, 2), (3, 3), (1, 4), (5, 16)],
                         [(2, 1), (4, 2), (3, 3), (1, 4), (5, 16), (6, 9)],
                         [(2, 1), (4, 2), (3, 3), (1, 4), (5, 16), (6, 9), (7, 10)],
-                        [(2, 1), (4, 2), (3, 3), (1, 4), (5, 16), (6, 9), (7, 10),
-                            (8, 14)],
-                        [(2, 1), (4, 2), (3, 3), (1, 4), (5, 16), (6, 9), (7, 10),
-                            (8, 14), (9, 8)],
-                        [(2, 1), (4, 2), (3, 3), (1, 4), (10, 7), (6, 9), (7, 10),
-                            (8, 14), (9, 8), (5, 16)]]
+                        [
+                            (2, 1), (4, 2), (3, 3), (1, 4), (5, 16), (6, 9), (7, 10),
+                            (8, 14),
+                        ],
+                        [
+                            (2, 1), (4, 2), (3, 3), (1, 4), (5, 16), (6, 9), (7, 10),
+                            (8, 14), (9, 8),
+                        ],
+                        [
+                            (2, 1), (4, 2), (3, 3), (1, 4), (10, 7), (6, 9), (7, 10),
+                            (8, 14), (9, 8), (5, 16),
+                        ],
+                    ]
 
                     for i in 1:length(vs2)
                         push!(heap, vs2[i])
@@ -186,8 +202,10 @@ using Test
                     end
 
                     @testset "pop! custom ordering" begin
-                        @test isequal(extract_all!(heap),
-                            sort(vs2; order = ordering))
+                        @test isequal(
+                            extract_all!(heap),
+                            sort(vs2; order = ordering)
+                        )
                         @test isempty(heap)
                     end
                 end
@@ -221,10 +239,12 @@ using Test
         end
 
         @testset "nlargest and nsmallest" begin
-            ss = [100, 103, -12, -109, 67, 4, 65, -52, -97, -32, -24, 114, -128,
+            ss = [
+                100, 103, -12, -109, 67, 4, 65, -52, -97, -32, -24, 114, -128,
                 102, -56, -17, -41, 25, -30, -84, 26, -84, 48, 49, -5, -38, 28,
                 114, -54, 96, -55, 67, 74, 127, -61, 124, 11, -7, 93, -51, 110,
-                -106, -84, -90, -18, -12, -116, 21, 115, 50]
+                -106, -84, -90, -18, -12, -116, 21, 115, 50,
+            ]
             square = x -> x^2
 
             for n in -1:(length(ss) + 1)
@@ -234,7 +254,7 @@ using Test
                 @test nsmallest(n, ss) == sort(ss)[r]
 
                 @test nlargest(n, ss; by = square) ==
-                      sort(ss; by = square, rev = true)[r]
+                    sort(ss; by = square, rev = true)[r]
                 @test nsmallest(n, ss; by = square) == sort(ss; by = square)[r]
 
                 @test nlargest(n, ss) == nextreme(FasterReverse(), n, ss)

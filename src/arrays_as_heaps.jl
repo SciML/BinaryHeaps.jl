@@ -10,8 +10,10 @@ heapright(i::Integer) = 2i + 1
 heapparent(i::Integer) = div(i, 2)
 
 # Binary min-heap percolate down.
-Base.@propagate_inbounds function percolate_down!(xs::AbstractArray, i::Integer, x,
-        o::Ordering = Forward, len::Integer = length(xs))
+Base.@propagate_inbounds function percolate_down!(
+        xs::AbstractArray, i::Integer, x,
+        o::Ordering = Forward, len::Integer = length(xs)
+    )
     @boundscheck checkbounds(xs, i)
     @boundscheck checkbounds(xs, len)
 
@@ -22,16 +24,20 @@ Base.@propagate_inbounds function percolate_down!(xs::AbstractArray, i::Integer,
         xs[i] = xs[j]
         i = j
     end
-    @inbounds xs[i] = x
+    return @inbounds xs[i] = x
 end
-Base.@propagate_inbounds function percolate_down!(xs::AbstractArray, i::Integer,
-        o::Ordering = Forward, len::Integer = length(xs))
-    percolate_down!(xs, i, xs[i], o, len)
+Base.@propagate_inbounds function percolate_down!(
+        xs::AbstractArray, i::Integer,
+        o::Ordering = Forward, len::Integer = length(xs)
+    )
+    return percolate_down!(xs, i, xs[i], o, len)
 end
 
 # Binary min-heap percolate up.
-Base.@propagate_inbounds function percolate_up!(xs::AbstractArray, i::Integer, x,
-        o::Ordering = Forward)
+Base.@propagate_inbounds function percolate_up!(
+        xs::AbstractArray, i::Integer, x,
+        o::Ordering = Forward
+    )
     @boundscheck checkbounds(xs, i)
 
     @inbounds while (j = heapparent(i)) >= 1
@@ -39,11 +45,13 @@ Base.@propagate_inbounds function percolate_up!(xs::AbstractArray, i::Integer, x
         xs[i] = xs[j]
         i = j
     end
-    @inbounds xs[i] = x
+    return @inbounds xs[i] = x
 end
-Base.@propagate_inbounds function percolate_up!(xs::AbstractArray, i::Integer,
-        o::Ordering = Forward)
-    percolate_up!(xs, i, xs[i], o)
+Base.@propagate_inbounds function percolate_up!(
+        xs::AbstractArray, i::Integer,
+        o::Ordering = Forward
+    )
+    return percolate_up!(xs, i, xs[i], o)
 end
 
 """
@@ -104,7 +112,7 @@ function isheap(xs::AbstractArray, o::Ordering = Forward)
     Base.require_one_based_indexing(xs)
     for i in 1:div(length(xs), 2)
         if lt(o, xs[heapleft(i)], xs[i]) ||
-           (heapright(i) <= length(xs) && lt(o, xs[heapright(i)], xs[i]))
+                (heapright(i) <= length(xs) && lt(o, xs[heapright(i)], xs[i]))
             return false
         end
     end

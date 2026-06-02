@@ -36,30 +36,30 @@ mutable struct BinaryHeap{T, O <: Base.Ordering} <: AbstractHeap{T}
     valtree::Vector{T}
 
     function BinaryHeap{T}(ordering::Base.Ordering) where {T}
-        new{T, typeof(ordering)}(ordering, Vector{T}())
+        return new{T, typeof(ordering)}(ordering, Vector{T}())
     end
 
     function BinaryHeap{T}(ordering::Base.Ordering, xs::AbstractVector) where {T}
         valtree = heapify(xs, ordering)
-        new{T, typeof(ordering)}(ordering, valtree)
+        return new{T, typeof(ordering)}(ordering, valtree)
     end
 end
 
 function BinaryHeap(ordering::Base.Ordering, xs::AbstractVector{T}) where {T}
-    BinaryHeap{T}(ordering, xs)
+    return BinaryHeap{T}(ordering, xs)
 end
 
 # Constructors using singleton order types as type parameters rather than arguments
 BinaryHeap{T, O}() where {T, O <: Base.Ordering} = BinaryHeap{T}(O())
 function BinaryHeap{T, O}(xs::AbstractVector) where {T, O <: Base.Ordering}
-    BinaryHeap{T}(O(), xs)
+    return BinaryHeap{T}(O(), xs)
 end
 
 # These constructors needed for BinaryMaxHeap,
 # until we have https://github.com/JuliaLang/julia/pull/37822
 BinaryHeap{T, DefaultReverseOrdering}() where {T} = BinaryHeap{T}(Base.Reverse)
 function BinaryHeap{T, DefaultReverseOrdering}(xs::AbstractVector) where {T}
-    BinaryHeap{T}(Base.Reverse, xs)
+    return BinaryHeap{T}(Base.Reverse, xs)
 end
 
 # Forward/reverse ordering type aliases
