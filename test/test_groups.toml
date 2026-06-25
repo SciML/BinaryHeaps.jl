@@ -1,0 +1,14 @@
+# Test-group matrix for BinaryHeaps (consumed by the reusable
+# SciML/.github grouped-tests.yml@v1 workflow via
+# scripts/compute_affected_sublibraries.jl --root-matrix).
+#
+# Core runs the functional suite (core_tests.jl, extracted from DataStructures.jl)
+# on every supported Julia version.
+# QA runs the metadata/static-analysis checks (Aqua + JET + ExplicitImports) in
+# the isolated test/qa environment.
+
+[Core]
+versions = ["lts", "1"]
+
+[QA]
+versions = ["lts", "1"]
