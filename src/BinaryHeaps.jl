@@ -20,7 +20,15 @@ export AbstractHeap,
     heapleft, heapright, heapparent,
     nlargest, nsmallest, nextreme
 
-# Abstract type
+"""
+    AbstractHeap{T}
+
+Abstract supertype for heap containers whose elements have type `T`.
+
+# Type Parameters
+
+- `T`: Element type stored by the heap.
+"""
 abstract type AbstractHeap{VT} end
 Base.eltype(::Type{<:AbstractHeap{T}}) where {T} = T
 

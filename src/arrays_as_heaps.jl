@@ -5,8 +5,49 @@
 # ------------------------------
 
 # Binary heap indexing
+"""
+    heapleft(i::Integer)
+
+Return the one-based array index of the left child of heap node `i`.
+
+# Arguments
+
+- `i`: One-based heap node index.
+
+# Returns
+
+The one-based index of the left child.
+"""
 heapleft(i::Integer) = 2i
+
+"""
+    heapright(i::Integer)
+
+Return the one-based array index of the right child of heap node `i`.
+
+# Arguments
+
+- `i`: One-based heap node index.
+
+# Returns
+
+The one-based index of the right child.
+"""
 heapright(i::Integer) = 2i + 1
+
+"""
+    heapparent(i::Integer)
+
+Return the one-based array index of the parent of heap node `i`.
+
+# Arguments
+
+- `i`: One-based heap node index.
+
+# Returns
+
+The one-based index of the parent node.
+"""
 heapparent(i::Integer) = div(i, 2)
 
 # Binary min-heap percolate down.

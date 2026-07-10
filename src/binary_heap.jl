@@ -31,6 +31,35 @@ Base.lt(::FasterReverse, a, b) = a > b
 #
 #################################################
 
+"""
+    BinaryHeap{T, O <: Base.Ordering} <: AbstractHeap{T}
+    BinaryHeap{T}(ordering::Base.Ordering)
+    BinaryHeap{T}(ordering::Base.Ordering, xs::AbstractVector)
+    BinaryHeap(ordering::Base.Ordering, xs::AbstractVector{T})
+
+Binary heap storing values of type `T` according to ordering `O`.
+
+# Type Parameters
+
+- `T`: Element type stored by the heap.
+- `O`: Ordering type used to compare heap elements.
+
+# Fields
+
+- `ordering`: Ordering used to compare heap elements.
+- `valtree`: One-based array storing the heap tree.
+
+# Examples
+
+```julia
+using BinaryHeaps
+
+h = BinaryHeap{Int}(Base.Order.Forward)
+push!(h, 3)
+push!(h, 1)
+pop!(h) # returns 1
+```
+"""
 mutable struct BinaryHeap{T, O <: Base.Ordering} <: AbstractHeap{T}
     ordering::O
     valtree::Vector{T}
@@ -62,8 +91,34 @@ function BinaryHeap{T, DefaultReverseOrdering}(xs::AbstractVector) where {T}
     return BinaryHeap{T}(Base.Reverse, xs)
 end
 
-# Forward/reverse ordering type aliases
+"""
+    BinaryMinHeap{T}
+    BinaryMinHeap{T}()
+    BinaryMinHeap{T}(xs::AbstractVector)
+    BinaryMinHeap(xs::AbstractVector{T})
+
+Alias for [`BinaryHeap`](@ref) using `Base.ForwardOrdering`, so the smallest
+element is at the top of the heap.
+
+# Type Parameters
+
+- `T`: Element type stored by the heap.
+"""
 const BinaryMinHeap{T} = BinaryHeap{T, Base.ForwardOrdering}
+
+"""
+    BinaryMaxHeap{T}
+    BinaryMaxHeap{T}()
+    BinaryMaxHeap{T}(xs::AbstractVector)
+    BinaryMaxHeap(xs::AbstractVector{T})
+
+Alias for [`BinaryHeap`](@ref) using reverse ordering, so the largest element is
+at the top of the heap.
+
+# Type Parameters
+
+- `T`: Element type stored by the heap.
+"""
 const BinaryMaxHeap{T} = BinaryHeap{T, DefaultReverseOrdering}
 
 BinaryMinHeap(xs::AbstractVector{T}) where {T} = BinaryMinHeap{T}(xs)
