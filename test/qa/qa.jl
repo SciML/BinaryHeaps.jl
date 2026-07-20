@@ -6,7 +6,6 @@ using SciMLTesting, BinaryHeaps, JET
 # (they go public as Base releases mark them so). All from `Base`.
 run_qa(
     BinaryHeaps;
-    explicit_imports = true,
     ei_kwargs = (;
         all_qualified_accesses_are_public = (;
             ignore = (
