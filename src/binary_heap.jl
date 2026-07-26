@@ -3,27 +3,49 @@
 
 #################################################
 #
-#   Ordering types for faster float comparison
+#   Comparator types for faster float comparison
 #
 #################################################
 
 """
     FasterForward()
 
-Enables 2x faster float comparison versus `Base.ForwardOrdering`,
-but ordering is undefined if the data contains NaN values.
+Callable comparator that evaluates `a < b` directly. It can be faster than `isless`
+for NaN-free floating-point data, but its ordering is undefined when either operand is
+`NaN`.
+
+# Examples
+
+```julia
+using BinaryHeaps
+
+heap = BinaryHeap{Float64}(FasterForward(), [3.0, 1.0])
+pop!(heap) # returns 1.0
+```
 """
-struct FasterForward <: Base.Ordering end
-Base.lt(::FasterForward, a, b) = a < b
+struct FasterForward end
+(::FasterForward)(a, b) = a < b
 
 """
     FasterReverse()
 
-Enables 2x faster float comparison versus `Base.ReverseOrdering`,
-but ordering is undefined if the data contains NaN values.
+Callable comparator that evaluates `a > b` directly. It can be faster than a reversed
+`isless` comparator for NaN-free floating-point data, but its ordering is undefined
+when either operand is `NaN`.
+
+# Examples
+
+```julia
+using BinaryHeaps
+
+heap = BinaryHeap{Float64}(FasterReverse(), [3.0, 1.0])
+pop!(heap) # returns 3.0
+```
 """
-struct FasterReverse <: Base.Ordering end
-Base.lt(::FasterReverse, a, b) = a > b
+struct FasterReverse end
+(::FasterReverse)(a, b) = a > b
+
+_reverse_isless(a, b) = isless(b, a)
 
 #################################################
 #
@@ -32,21 +54,24 @@ Base.lt(::FasterReverse, a, b) = a > b
 #################################################
 
 """
-    BinaryHeap{T, O <: Base.Ordering} <: AbstractHeap{T}
-    BinaryHeap{T}(ordering::Base.Ordering)
-    BinaryHeap{T}(ordering::Base.Ordering, xs::AbstractVector)
-    BinaryHeap(ordering::Base.Ordering, xs::AbstractVector{T})
+    BinaryHeap{T, F} <: AbstractHeap{T}
+    BinaryHeap{T}(lt = isless)
+    BinaryHeap{T}(lt, xs::AbstractVector)
+    BinaryHeap(lt, xs::AbstractVector{T})
 
-Binary heap storing values of type `T` according to ordering `O`.
+Mutable binary heap storing values of type `T`, ordered by the callable comparator
+`lt(a, b)::Bool`. The heap head is the value for which no other stored value compares
+less than it. The default comparator is `isless`.
 
 # Type Parameters
 
 - `T`: Element type stored by the heap.
-- `O`: Ordering type used to compare heap elements.
+- `F`: Type of the comparator function.
 
 # Fields
 
-- `ordering`: Ordering used to compare heap elements.
+- `lt`: Callable comparator used to compare heap elements. It must define a strict,
+  transitive ordering for the stored values.
 - `valtree`: One-based array storing the heap tree.
 
 # Examples
@@ -54,41 +79,31 @@ Binary heap storing values of type `T` according to ordering `O`.
 ```julia
 using BinaryHeaps
 
-h = BinaryHeap{Int}(Base.Order.Forward)
+h = BinaryHeap{Int}(isless)
 push!(h, 3)
 push!(h, 1)
 pop!(h) # returns 1
 ```
 """
-mutable struct BinaryHeap{T, O <: Base.Ordering} <: AbstractHeap{T}
-    ordering::O
+mutable struct BinaryHeap{T, F} <: AbstractHeap{T}
+    lt::F
     valtree::Vector{T}
 
-    function BinaryHeap{T}(ordering::Base.Ordering) where {T}
-        return new{T, typeof(ordering)}(ordering, Vector{T}())
-    end
-
-    function BinaryHeap{T}(ordering::Base.Ordering, xs::AbstractVector) where {T}
-        valtree = heapify(xs, ordering)
-        return new{T, typeof(ordering)}(ordering, valtree)
-    end
+    BinaryHeap{T, F}(lt::F, valtree::Vector{T}) where {T, F} =
+        new{T, F}(lt, valtree)
 end
 
-function BinaryHeap(ordering::Base.Ordering, xs::AbstractVector{T}) where {T}
-    return BinaryHeap{T}(ordering, xs)
+function BinaryHeap{T}(lt::F = isless) where {T, F}
+    return BinaryHeap{T, F}(lt, Vector{T}())
 end
 
-# Constructors using singleton order types as type parameters rather than arguments
-BinaryHeap{T, O}() where {T, O <: Base.Ordering} = BinaryHeap{T}(O())
-function BinaryHeap{T, O}(xs::AbstractVector) where {T, O <: Base.Ordering}
-    return BinaryHeap{T}(O(), xs)
+function BinaryHeap{T}(lt::F, xs::AbstractVector) where {T, F}
+    valtree = heapify!(Vector{T}(xs), lt)
+    return BinaryHeap{T, F}(lt, valtree)
 end
 
-# These constructors needed for BinaryMaxHeap,
-# until we have https://github.com/JuliaLang/julia/pull/37822
-BinaryHeap{T, DefaultReverseOrdering}() where {T} = BinaryHeap{T}(Base.Reverse)
-function BinaryHeap{T, DefaultReverseOrdering}(xs::AbstractVector) where {T}
-    return BinaryHeap{T}(Base.Reverse, xs)
+function BinaryHeap(lt::F, xs::AbstractVector{T}) where {T, F}
+    return BinaryHeap{T}(lt, xs)
 end
 
 """
@@ -97,14 +112,22 @@ end
     BinaryMinHeap{T}(xs::AbstractVector)
     BinaryMinHeap(xs::AbstractVector{T})
 
-Alias for [`BinaryHeap`](@ref) using `Base.ForwardOrdering`, so the smallest
-element is at the top of the heap.
+Alias for [`BinaryHeap`](@ref) using `isless`, so the smallest element is at the
+top of the heap.
 
 # Type Parameters
 
 - `T`: Element type stored by the heap.
+
+# Examples
+
+```julia
+using BinaryHeaps
+
+pop!(BinaryMinHeap([3, 1, 2])) # returns 1
+```
 """
-const BinaryMinHeap{T} = BinaryHeap{T, Base.ForwardOrdering}
+const BinaryMinHeap{T} = BinaryHeap{T, typeof(isless)}
 
 """
     BinaryMaxHeap{T}
@@ -112,15 +135,27 @@ const BinaryMinHeap{T} = BinaryHeap{T, Base.ForwardOrdering}
     BinaryMaxHeap{T}(xs::AbstractVector)
     BinaryMaxHeap(xs::AbstractVector{T})
 
-Alias for [`BinaryHeap`](@ref) using reverse ordering, so the largest element is
-at the top of the heap.
+Alias for [`BinaryHeap`](@ref) using a package-local reverse `isless` comparator, so
+the largest element is at the top of the heap.
 
 # Type Parameters
 
 - `T`: Element type stored by the heap.
-"""
-const BinaryMaxHeap{T} = BinaryHeap{T, DefaultReverseOrdering}
 
+# Examples
+
+```julia
+using BinaryHeaps
+
+pop!(BinaryMaxHeap([3, 1, 2])) # returns 3
+```
+"""
+const BinaryMaxHeap{T} = BinaryHeap{T, typeof(_reverse_isless)}
+
+BinaryMinHeap{T}() where {T} = BinaryHeap{T}()
+BinaryMinHeap{T}(xs::AbstractVector) where {T} = BinaryHeap{T}(isless, xs)
+BinaryMaxHeap{T}() where {T} = BinaryHeap{T}(_reverse_isless)
+BinaryMaxHeap{T}(xs::AbstractVector) where {T} = BinaryHeap{T}(_reverse_isless, xs)
 BinaryMinHeap(xs::AbstractVector{T}) where {T} = BinaryMinHeap{T}(xs)
 BinaryMaxHeap(xs::AbstractVector{T}) where {T} = BinaryMaxHeap{T}(xs)
 
@@ -150,7 +185,7 @@ Base.isempty(h::BinaryHeap) = isempty(h.valtree)
 Adds the `value` element to the heap `h`.
 """
 @inline function Base.push!(h::BinaryHeap, v)
-    heappush!(h.valtree, v, h.ordering)
+    heappush!(h.valtree, convert(eltype(h), v), h.lt)
     return h
 end
 
@@ -166,7 +201,7 @@ Returns the element at the top of the heap `h`.
 
 Removes and returns the element at the top of the heap `h`.
 """
-Base.pop!(h::BinaryHeap) = heappop!(h.valtree, h.ordering)
+Base.pop!(h::BinaryHeap) = heappop!(h.valtree, h.lt)
 
 function Base.empty!(h::BinaryHeap)
     empty!(h.valtree)

@@ -9,8 +9,6 @@ Original code is Copyright (c) 2013 Dahua Lin, MIT License.
 """
 module BinaryHeaps
 
-using Base.Order: Forward, Ordering, lt
-
 export AbstractHeap,
     BinaryHeap, BinaryMinHeap, BinaryMaxHeap,
     FasterForward, FasterReverse,
@@ -28,11 +26,32 @@ Abstract supertype for heap containers whose elements have type `T`.
 # Type Parameters
 
 - `T`: Element type stored by the heap.
+
+# Interface
+
+`AbstractHeap` is an extension interface for mutable heap containers. A subtype must
+implement `Base.length(h)` and `Base.pop!(h)`, where each `pop!` removes and returns
+the current heap head. `extract_all!` and `extract_all_rev!` use only those generic
+functions. Implement `Base.first(h)` and `Base.push!(h, value)` as well when the
+subtype is intended to support the normal heap-container workflow.
+
+# Examples
+
+```julia
+using BinaryHeaps
+
+mutable struct OneElementHeap{T} <: AbstractHeap{T}
+    value::T
+end
+
+Base.length(::OneElementHeap) = 1
+Base.pop!(h::OneElementHeap) = h.value
+
+extract_all!(OneElementHeap(3)) # returns [3]
+```
 """
 abstract type AbstractHeap{VT} end
 Base.eltype(::Type{<:AbstractHeap{T}}) where {T} = T
-
-const DefaultReverseOrdering = Base.ReverseOrdering{Base.ForwardOrdering}
 
 include("arrays_as_heaps.jl")
 include("binary_heap.jl")

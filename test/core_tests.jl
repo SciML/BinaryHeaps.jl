@@ -4,19 +4,22 @@
 using BinaryHeaps
 using Test
 
+const BY_LAST = (a, b) -> isless(last(a), last(b))
+const REVERSE_ISLESS = (a, b) -> isless(b, a)
+
 @testset "BinaryHeaps.jl" begin
     @testset "BinaryHeaps" begin
         @testset "make heap" begin
             vs = [4, 1, 3, 2, 16, 9, 10, 14, 8, 7]
             vs2 = collect(enumerate(vs))
-            ordering = Base.Order.By(last)
+            ordering = BY_LAST
 
             @testset "construct heap" begin
-                BinaryHeap{Int, Base.ForwardOrdering}()
-                BinaryHeap{Int, Base.ForwardOrdering}(vs)
+                BinaryHeap{Int}(isless)
+                BinaryHeap{Int}(isless, vs)
 
-                BinaryHeap{Int, Base.ReverseOrdering}()
-                BinaryHeap{Int, Base.ReverseOrdering}(vs)
+                BinaryHeap{Int}(REVERSE_ISLESS)
+                BinaryHeap{Int}(REVERSE_ISLESS, vs)
 
                 BinaryMinHeap{Int}()
                 BinaryMinHeap{Int}(vs)
@@ -39,8 +42,7 @@ using Test
             end
 
             @testset "implicit conversion" begin
-                @test BinaryHeap{Float64, Base.ForwardOrdering}(vs) isa
-                    BinaryHeap{Float64, Base.ForwardOrdering}
+                @test BinaryHeap{Float64}(isless, vs) isa BinaryHeap{Float64}
                 @test BinaryMinHeap{Float64}(vs) isa BinaryMinHeap{Float64}
                 @test BinaryMaxHeap{Float64}(vs) isa BinaryMaxHeap{Float64}
                 @test BinaryHeap{Tuple{Int, Float64}}(ordering, vs2) isa
@@ -49,12 +51,12 @@ using Test
 
             @testset "confirm heap" begin
                 @test isheap([1, 2, 3, 4, 7, 9, 10, 14, 8, 16])
-                @test isheap([16, 14, 10, 8, 7, 3, 9, 1, 4, 2], Base.Reverse)
+                @test isheap([16, 14, 10, 8, 7, 3, 9, 1, 4, 2], REVERSE_ISLESS)
 
                 @test !isheap([16, 14, 10, 8, 7, 3, 9, 1, 4, 2])
-                @test !isheap([1, 2, 3, 4, 7, 9, 10, 14, 8, 16], Base.Reverse)
+                @test !isheap([1, 2, 3, 4, 7, 9, 10, 14, 8, 16], REVERSE_ISLESS)
                 @test !isheap([15, 2, 3, 4, 7, 9, 10, 14, 8, 16])
-                @test !isheap([15, 2, 3, 4, 7, 9, 10, 14, 8, 16], Base.Reverse)
+                @test !isheap([15, 2, 3, 4, 7, 9, 10, 14, 8, 16], REVERSE_ISLESS)
             end
 
             @testset "make min heap" begin
@@ -73,7 +75,7 @@ using Test
                 @test length(h) == 10
                 @test !isempty(h)
                 @test first(h) == 16
-                @test isheap([16, 14, 10, 8, 7, 3, 9, 1, 4, 2], Base.Reverse)
+                @test isheap([16, 14, 10, 8, 7, 3, 9, 1, 4, 2], REVERSE_ISLESS)
                 @test sizehint!(h, 100) === h
             end
 
@@ -204,7 +206,7 @@ using Test
                     @testset "pop! custom ordering" begin
                         @test isequal(
                             extract_all!(heap),
-                            sort(vs2; order = ordering)
+                            sort(vs2; lt = ordering)
                         )
                         @test isempty(heap)
                     end
@@ -275,7 +277,7 @@ using Test
         @testset "empty!" begin
             vs = [4, 1, 3, 2, 16, 9, 10, 14, 8, 7]
             vs2 = collect(enumerate(vs))
-            ordering = Base.Order.By(last)
+            ordering = BY_LAST
 
             for h in
                 (BinaryMinHeap(vs), BinaryMaxHeap(vs), BinaryHeap(ordering, vs2))
@@ -309,48 +311,48 @@ using Test
         end
 
         @testset "isheap" begin
-            @test isheap([1, 2, 3], Base.Order.Forward)
-            @test !isheap([1, 2, 3], Base.Order.Reverse)
+            @test isheap([1, 2, 3])
+            @test !isheap([1, 2, 3], REVERSE_ISLESS)
         end
 
         @testset "percolate_down!" begin
             @testset "Basic percolate down" begin
                 xs = [10, 2, 3, 4, 5]
-                BinaryHeaps.percolate_down!(xs, 1, 10, Base.Order.Forward)
+                BinaryHeaps.percolate_down!(xs, 1, 10, isless, length(xs))
                 @test xs == [2, 4, 3, 10, 5]
             end
 
             @testset "Element in correct position" begin
                 xs = [1, 2, 3, 4, 5]
-                BinaryHeaps.percolate_down!(xs, 1, 1, Base.Order.Forward)
+                BinaryHeaps.percolate_down!(xs, 1, 1, isless, length(xs))
                 @test xs == [1, 2, 3, 4, 5]
             end
 
             @testset "Reverse ordering" begin
                 xs = [1, 5, 4, 3, 2]
-                BinaryHeaps.percolate_down!(xs, 1, 1, Base.Order.Reverse)
+                BinaryHeaps.percolate_down!(xs, 1, 1, REVERSE_ISLESS, length(xs))
                 @test xs == [5, 3, 4, 1, 2]
             end
 
             @testset "Custom length" begin
                 xs = [10, 2, 3, 4, 5]
-                BinaryHeaps.percolate_down!(xs, 1, 10, Base.Order.Forward, 3)
+                BinaryHeaps.percolate_down!(xs, 1, 10, isless, 3)
                 @test xs == [2, 10, 3, 4, 5]
             end
 
             @testset "Without explicit x parameter" begin
                 xs = [10, 2, 3, 4, 5]
-                BinaryHeaps.percolate_down!(xs, 1, Base.Order.Forward)
+                BinaryHeaps.percolate_down!(xs, 1, xs[1], isless, length(xs))
                 @test xs == [2, 4, 3, 10, 5]
 
                 xs = [10, 2, 3, 4, 5]
-                BinaryHeaps.percolate_down!(xs, 1)
+                BinaryHeaps.percolate_down!(xs, 1, xs[1], isless, length(xs))
                 @test xs == [2, 4, 3, 10, 5]
             end
 
             @testset "From middle position" begin
                 xs = [2, 0, 3, 4, 5]
-                BinaryHeaps.percolate_down!(xs, 2, 10, Base.Order.Forward)
+                BinaryHeaps.percolate_down!(xs, 2, 10, isless, length(xs))
                 @test xs == [2, 4, 3, 10, 5]
             end
         end
@@ -358,41 +360,41 @@ using Test
         @testset "percolate_up!" begin
             @testset "Basic percolate up" begin
                 xs = [1, 2, 3, 4, 0]
-                BinaryHeaps.percolate_up!(xs, 5, 0, Base.Order.Forward)
+                BinaryHeaps.percolate_up!(xs, 5, 0, isless)
                 @test xs == [0, 1, 3, 4, 2]
             end
 
             @testset "Element in correct position" begin
                 xs = [1, 2, 3, 4, 5]
-                BinaryHeaps.percolate_up!(xs, 5, 5, Base.Order.Forward)
+                BinaryHeaps.percolate_up!(xs, 5, 5, isless)
                 @test xs == [1, 2, 3, 4, 5]
             end
 
             @testset "Reverse ordering" begin
                 xs = [5, 4, 3, 2, 10]
-                BinaryHeaps.percolate_up!(xs, 5, 10, Base.Order.Reverse)
+                BinaryHeaps.percolate_up!(xs, 5, 10, REVERSE_ISLESS)
                 @test xs == [10, 5, 3, 2, 4]
             end
 
             @testset "Percolate to root" begin
                 xs = [2, 3, 4, 5, 1]
-                BinaryHeaps.percolate_up!(xs, 5, 1, Base.Order.Forward)
+                BinaryHeaps.percolate_up!(xs, 5, 1, isless)
                 @test xs == [1, 2, 4, 5, 3]
             end
 
             @testset "Without explicit x parameter" begin
                 xs = [1, 2, 3, 4, 0]
-                BinaryHeaps.percolate_up!(xs, 5, Base.Order.Forward)
+                BinaryHeaps.percolate_up!(xs, 5, xs[5], isless)
                 @test xs == [0, 1, 3, 4, 2]
 
                 xs = [1, 2, 3, 4, 0]
-                BinaryHeaps.percolate_up!(xs, 5)
+                BinaryHeaps.percolate_up!(xs, 5, xs[5], isless)
                 @test xs == [0, 1, 3, 4, 2]
             end
 
             @testset "From middle position" begin
                 xs = [1, 5, 3, 10, 8]
-                BinaryHeaps.percolate_up!(xs, 4, 0, Base.Order.Forward)
+                BinaryHeaps.percolate_up!(xs, 4, 0, isless)
                 @test xs == [0, 1, 3, 5, 8]
             end
         end
@@ -402,5 +404,21 @@ using Test
         h = BinaryMinHeap{Float64}()
         @test eltype(h) == Float64
         @test eltype(typeof(h)) == Float64
+    end
+
+    @testset "AbstractHeap generic interface" begin
+        mutable struct TestHeap{T} <: AbstractHeap{T}
+            values::Vector{T}
+        end
+        Base.length(h::TestHeap) = length(h.values)
+        Base.pop!(h::TestHeap) = popfirst!(h.values)
+
+        heap = TestHeap([1, 2, 3])
+        @test extract_all!(heap) == [1, 2, 3]
+        @test isempty(heap.values)
+
+        reverse_heap = TestHeap([1, 2, 3])
+        @test extract_all_rev!(reverse_heap) == [3, 2, 1]
+        @test isempty(reverse_heap.values)
     end
 end

@@ -51,109 +51,179 @@ The one-based index of the parent node.
 heapparent(i::Integer) = div(i, 2)
 
 # Binary min-heap percolate down.
-Base.@propagate_inbounds function percolate_down!(
-        xs::AbstractArray, i::Integer, x,
-        o::Ordering = Forward, len::Integer = length(xs)
+function _require_one_based_indexing(xs::AbstractVector)
+    firstindex(xs) == 1 || throw(ArgumentError("heap vectors must use one-based indexing"))
+    return nothing
+end
+
+@inline function percolate_down!(
+        xs::AbstractVector, i::Integer, x, lt, len::Integer
     )
+    _require_one_based_indexing(xs)
     @boundscheck checkbounds(xs, i)
     @boundscheck checkbounds(xs, len)
 
     @inbounds while (l = heapleft(i)) <= len
         r = heapright(i)
-        j = r > len || lt(o, xs[l], xs[r]) ? l : r
-        lt(o, xs[j], x) || break
+        j = r > len || lt(xs[l], xs[r]) ? l : r
+        lt(xs[j], x) || break
         xs[i] = xs[j]
         i = j
     end
     return @inbounds xs[i] = x
-end
-Base.@propagate_inbounds function percolate_down!(
-        xs::AbstractArray, i::Integer,
-        o::Ordering = Forward, len::Integer = length(xs)
-    )
-    return percolate_down!(xs, i, xs[i], o, len)
 end
 
 # Binary min-heap percolate up.
-Base.@propagate_inbounds function percolate_up!(
-        xs::AbstractArray, i::Integer, x,
-        o::Ordering = Forward
-    )
+@inline function percolate_up!(xs::AbstractVector, i::Integer, x, lt)
+    _require_one_based_indexing(xs)
     @boundscheck checkbounds(xs, i)
 
     @inbounds while (j = heapparent(i)) >= 1
-        lt(o, x, xs[j]) || break
+        lt(x, xs[j]) || break
         xs[i] = xs[j]
         i = j
     end
     return @inbounds xs[i] = x
 end
-Base.@propagate_inbounds function percolate_up!(
-        xs::AbstractArray, i::Integer,
-        o::Ordering = Forward
-    )
-    return percolate_up!(xs, i, xs[i], o)
-end
 
 """
-    heappop!(v, [ord])
+    heappop!(xs, [lt])
 
-Given a binary heap-ordered array, remove and return the lowest ordered element.
-For efficiency, this function does not check that the array is indeed heap-ordered.
+Remove and return the heap head of one-based heap vector `xs`. `lt(a, b)` determines
+whether `a` belongs before `b`; it defaults to `isless`.
+
+# Arguments
+
+- `xs`: Mutable, one-based vector already satisfying the heap invariant.
+- `lt`: Callable strict ordering comparator.
+
+# Examples
+
+```julia
+using BinaryHeaps
+
+heappop!(heapify!([3, 1, 2])) # returns 1
+```
 """
-function heappop!(xs::AbstractArray, o::Ordering = Forward)
-    Base.require_one_based_indexing(xs)
+function heappop!(xs::AbstractVector, lt = isless)
+    _require_one_based_indexing(xs)
     x = xs[1]
     y = pop!(xs)
     if !isempty(xs)
-        @inbounds percolate_down!(xs, 1, y, o)
+        @inbounds percolate_down!(xs, 1, y, lt, length(xs))
     end
     return x
 end
 
 """
-    heappush!(v, x, [ord])
+    heappush!(xs, value, [lt])
 
-Given a binary heap-ordered array, push a new element `x`, preserving the heap property.
-For efficiency, this function does not check that the array is indeed heap-ordered.
+Insert `value` into one-based heap vector `xs`, preserving its heap invariant. `lt(a,
+b)` determines whether `a` belongs before `b`; it defaults to `isless`.
+
+# Arguments
+
+- `xs`: Mutable, one-based vector already satisfying the heap invariant.
+- `value`: Value to insert.
+- `lt`: Callable strict ordering comparator.
+
+# Returns
+
+Returns `xs`.
+
+# Examples
+
+```julia
+using BinaryHeaps
+
+xs = heapify!([3, 1])
+heappush!(xs, 2)
+first(xs) # returns 1
+```
 """
-@inline function heappush!(xs::AbstractArray, x, o::Ordering = Forward)
-    Base.require_one_based_indexing(xs)
-    push!(xs, x)
-    @inbounds percolate_up!(xs, length(xs), o)
+@inline function heappush!(xs::AbstractVector, value, lt = isless)
+    _require_one_based_indexing(xs)
+    push!(xs, value)
+    @inbounds percolate_up!(xs, length(xs), value, lt)
     return xs
 end
 
 """
-    heapify!(v, ord::Ordering=Forward)
+    heapify!(xs, [lt])
 
-In-place [`heapify`](@ref).
+Transform one-based vector `xs` into a heap in place, using comparator `lt(a, b)`.
+
+# Arguments
+
+- `xs`: Mutable, one-based vector to heapify.
+- `lt`: Callable strict ordering comparator. Defaults to `isless`.
+
+# Returns
+
+Returns `xs` after heapification.
+
+# Examples
+
+```julia
+using BinaryHeaps
+
+isheap(heapify!([3, 1, 2])) # returns true
+```
 """
-@inline function heapify!(xs::AbstractArray, o::Ordering = Forward)
-    Base.require_one_based_indexing(xs)
+@inline function heapify!(xs::AbstractVector, lt = isless)
+    _require_one_based_indexing(xs)
     for i in heapparent(length(xs)):-1:1
-        @inbounds percolate_down!(xs, i, o)
+        @inbounds percolate_down!(xs, i, xs[i], lt, length(xs))
     end
     return xs
 end
 
 """
-    heapify(v, ord::Ordering=Forward)
+    heapify(xs, [lt])
 
-Returns a new vector in binary heap order, optionally using the given ordering.
+Return a new vector containing `xs` in heap order according to `lt(a, b)`.
+
+# Arguments
+
+- `xs`: One-based vector to copy and heapify.
+- `lt`: Callable strict ordering comparator. Defaults to `isless`.
+
+# Examples
+
+```julia
+using BinaryHeaps
+
+xs = [3, 1, 2]
+heap = heapify(xs)
+xs == [3, 1, 2] && isheap(heap) # returns true
+```
 """
-heapify(xs::AbstractArray, o::Ordering = Forward) = heapify!(copyto!(similar(xs), xs), o)
+heapify(xs::AbstractVector, lt = isless) = heapify!(copyto!(similar(xs), xs), lt)
 
 """
-    isheap(v, ord::Ordering=Forward)
+    isheap(xs, [lt])
 
-Return `true` if an array is heap-ordered according to the given order.
+Return whether one-based vector `xs` satisfies the heap invariant for comparator
+`lt(a, b)`.
+
+# Arguments
+
+- `xs`: One-based vector to inspect.
+- `lt`: Callable strict ordering comparator. Defaults to `isless`.
+
+# Examples
+
+```julia
+using BinaryHeaps
+
+isheap([1, 3, 2]) # returns true
+```
 """
-function isheap(xs::AbstractArray, o::Ordering = Forward)
-    Base.require_one_based_indexing(xs)
+function isheap(xs::AbstractVector, lt = isless)
+    _require_one_based_indexing(xs)
     for i in 1:div(length(xs), 2)
-        if lt(o, xs[heapleft(i)], xs[i]) ||
-                (heapright(i) <= length(xs) && lt(o, xs[heapright(i)], xs[i]))
+        if lt(xs[heapleft(i)], xs[i]) ||
+                (heapright(i) <= length(xs) && lt(xs[heapright(i)], xs[i]))
             return false
         end
     end
