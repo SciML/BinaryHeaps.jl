@@ -32,7 +32,7 @@ Abstract supertype for heap containers whose elements have type `T`.
 abstract type AbstractHeap{VT} end
 Base.eltype(::Type{<:AbstractHeap{T}}) where {T} = T
 
-const DefaultReverseOrdering = Base.ReverseOrdering{Base.ForwardOrdering}
+const DefaultReverseOrdering = Base.Order.ReverseOrdering{Base.Order.ForwardOrdering}
 
 include("arrays_as_heaps.jl")
 include("binary_heap.jl")

@@ -34,7 +34,7 @@ end
 
 Return an array of the first `n` values of `arr` sorted by `ord`.
 """
-function nextreme(ord::Base.Ordering, n::Int, arr::AbstractVector{T}) where {T}
+function nextreme(ord::Base.Order.Ordering, n::Int, arr::AbstractVector{T}) where {T}
     Base.require_one_based_indexing(arr)
     if n <= 0
         return T[]
@@ -42,12 +42,12 @@ function nextreme(ord::Base.Ordering, n::Int, arr::AbstractVector{T}) where {T}
         return sort(arr; order = ord)
     end
 
-    rev = Base.ReverseOrdering(ord)
+    rev = Base.Order.ReverseOrdering(ord)
     buffer = heapify!(arr[1:n], rev)
 
     @inbounds for i in (n + 1):length(arr)
         xi = arr[i]
-        if Base.lt(rev, buffer[1], xi)
+        if Base.Order.lt(rev, buffer[1], xi)
             buffer[1] = xi
             percolate_down!(buffer, 1, rev)
         end
@@ -62,7 +62,7 @@ end
 Return the `n` largest elements of the array `arr`.
 """
 function nlargest(n::Int, arr::AbstractVector; lt = isless, by = identity)
-    order = Base.ReverseOrdering(Base.ord(lt, by, nothing))
+    order = Base.Order.ReverseOrdering(Base.Order.ord(lt, by, nothing))
     return nextreme(order, n, arr)
 end
 
@@ -72,6 +72,6 @@ end
 Return the `n` smallest elements of the array `arr`.
 """
 function nsmallest(n::Int, arr::AbstractVector; lt = isless, by = identity)
-    order = Base.ord(lt, by, nothing)
+    order = Base.Order.ord(lt, by, nothing)
     return nextreme(order, n, arr)
 end

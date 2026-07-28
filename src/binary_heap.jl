@@ -10,20 +10,20 @@
 """
     FasterForward()
 
-Enables 2x faster float comparison versus `Base.ForwardOrdering`,
+Enables 2x faster float comparison versus `Base.Order.ForwardOrdering`,
 but ordering is undefined if the data contains NaN values.
 """
-struct FasterForward <: Base.Ordering end
-Base.lt(::FasterForward, a, b) = a < b
+struct FasterForward <: Base.Order.Ordering end
+Base.Order.lt(::FasterForward, a, b) = a < b
 
 """
     FasterReverse()
 
-Enables 2x faster float comparison versus `Base.ReverseOrdering`,
+Enables 2x faster float comparison versus `Base.Order.ReverseOrdering`,
 but ordering is undefined if the data contains NaN values.
 """
-struct FasterReverse <: Base.Ordering end
-Base.lt(::FasterReverse, a, b) = a > b
+struct FasterReverse <: Base.Order.Ordering end
+Base.Order.lt(::FasterReverse, a, b) = a > b
 
 #################################################
 #
@@ -32,10 +32,10 @@ Base.lt(::FasterReverse, a, b) = a > b
 #################################################
 
 """
-    BinaryHeap{T, O <: Base.Ordering} <: AbstractHeap{T}
-    BinaryHeap{T}(ordering::Base.Ordering)
-    BinaryHeap{T}(ordering::Base.Ordering, xs::AbstractVector)
-    BinaryHeap(ordering::Base.Ordering, xs::AbstractVector{T})
+    BinaryHeap{T, O <: Base.Order.Ordering} <: AbstractHeap{T}
+    BinaryHeap{T}(ordering::Base.Order.Ordering)
+    BinaryHeap{T}(ordering::Base.Order.Ordering, xs::AbstractVector)
+    BinaryHeap(ordering::Base.Order.Ordering, xs::AbstractVector{T})
 
 Binary heap storing values of type `T` according to ordering `O`.
 
@@ -60,35 +60,35 @@ push!(h, 1)
 pop!(h) # returns 1
 ```
 """
-mutable struct BinaryHeap{T, O <: Base.Ordering} <: AbstractHeap{T}
+mutable struct BinaryHeap{T, O <: Base.Order.Ordering} <: AbstractHeap{T}
     ordering::O
     valtree::Vector{T}
 
-    function BinaryHeap{T}(ordering::Base.Ordering) where {T}
+    function BinaryHeap{T}(ordering::Base.Order.Ordering) where {T}
         return new{T, typeof(ordering)}(ordering, Vector{T}())
     end
 
-    function BinaryHeap{T}(ordering::Base.Ordering, xs::AbstractVector) where {T}
+    function BinaryHeap{T}(ordering::Base.Order.Ordering, xs::AbstractVector) where {T}
         valtree = heapify(xs, ordering)
         return new{T, typeof(ordering)}(ordering, valtree)
     end
 end
 
-function BinaryHeap(ordering::Base.Ordering, xs::AbstractVector{T}) where {T}
+function BinaryHeap(ordering::Base.Order.Ordering, xs::AbstractVector{T}) where {T}
     return BinaryHeap{T}(ordering, xs)
 end
 
 # Constructors using singleton order types as type parameters rather than arguments
-BinaryHeap{T, O}() where {T, O <: Base.Ordering} = BinaryHeap{T}(O())
-function BinaryHeap{T, O}(xs::AbstractVector) where {T, O <: Base.Ordering}
+BinaryHeap{T, O}() where {T, O <: Base.Order.Ordering} = BinaryHeap{T}(O())
+function BinaryHeap{T, O}(xs::AbstractVector) where {T, O <: Base.Order.Ordering}
     return BinaryHeap{T}(O(), xs)
 end
 
 # These constructors needed for BinaryMaxHeap,
 # until we have https://github.com/JuliaLang/julia/pull/37822
-BinaryHeap{T, DefaultReverseOrdering}() where {T} = BinaryHeap{T}(Base.Reverse)
+BinaryHeap{T, DefaultReverseOrdering}() where {T} = BinaryHeap{T}(Base.Order.Reverse)
 function BinaryHeap{T, DefaultReverseOrdering}(xs::AbstractVector) where {T}
-    return BinaryHeap{T}(Base.Reverse, xs)
+    return BinaryHeap{T}(Base.Order.Reverse, xs)
 end
 
 """
@@ -97,14 +97,14 @@ end
     BinaryMinHeap{T}(xs::AbstractVector)
     BinaryMinHeap(xs::AbstractVector{T})
 
-Alias for [`BinaryHeap`](@ref) using `Base.ForwardOrdering`, so the smallest
+Alias for [`BinaryHeap`](@ref) using `Base.Order.ForwardOrdering`, so the smallest
 element is at the top of the heap.
 
 # Type Parameters
 
 - `T`: Element type stored by the heap.
 """
-const BinaryMinHeap{T} = BinaryHeap{T, Base.ForwardOrdering}
+const BinaryMinHeap{T} = BinaryHeap{T, Base.Order.ForwardOrdering}
 
 """
     BinaryMaxHeap{T}
