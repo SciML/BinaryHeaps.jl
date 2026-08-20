@@ -9,5 +9,4 @@ makedocs(;
         "API" => "api.md",
     ],
     checkdocs = :exports,
-    warnonly = false,
 )
