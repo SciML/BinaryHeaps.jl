@@ -38,17 +38,14 @@ function nextreme(ord::Base.Order.Ordering, n::Int, arr::AbstractVector{T}) wher
     Base.require_one_based_indexing(arr)
     len = length(arr)
     n = clamp(n, 0, len)
-    buffer = arr[1:n]
-
-    if n ∉ (1:(len - 1))
-        if n > 0
-            buffer = sort!(buffer; order = ord)
-        end
-        return buffer
+    buffer = similar(arr, n)
+    copyto!(buffer, 1, arr, 1, n)
+    if n == 0 || n == len
+        return sort!(buffer; order = ord)
     end
 
     rev = Base.Order.ReverseOrdering(ord)
-    buffer = heapify!(buffer, rev)
+    heapify!(buffer, rev)
 
     @inbounds for i in (n + 1):length(arr)
         xi = arr[i]
